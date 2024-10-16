@@ -12,13 +12,13 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+      - name: Init Submodules
+        run: git submodule update --recursive
       - uses: actions/checkout@v4
       - uses: prefix-dev/setup-pixi@v0.8.1
         with:
           pixi-version: v0.23.0
           environments: dev
           frozen: true
-      - name: Init Submodules
-        run: git submodule update --recursive
       - name: Run linter
         run: pixi run -e dev lint

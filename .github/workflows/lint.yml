@@ -18,6 +18,7 @@ jobs:
           pixi-version: v0.23.0
           environments: dev
           frozen: true
-
+      - name: Init Submodules
+        run: git submodule update --recursive
       - name: Run linter
         run: pixi run -e dev lint

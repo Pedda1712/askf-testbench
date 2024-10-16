@@ -1,0 +1,3 @@
+[submodule "dependencies/ASKF"]
+	path = dependencies/ASKF
+	url = git@github.com:Pedda1712/ASKF.git

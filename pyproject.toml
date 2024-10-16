@@ -1,7 +1,7 @@
 [project]
 authors = [{name = "Peter Preinesberger", email = "peter.preinesberger@study.thws.de"}]
-dependencies = [
-]
+dependencies = ["numpy>=2.1.2,<3"
+, "scipy>=1.14.1,<2", "h5py>=3.12.1,<4", "scikit-learn>=1.5.2,<2"]
 description = "An experiment runner for testing of ASKF estimator performance."
 name = "askf-bench"
 requires-python = ">= 3.11"
@@ -17,9 +17,9 @@ platforms = ["linux-64"]
 
 [tool.pixi.pypi-dependencies]
 askf_bench = { path = ".", editable = true }
+ASKF = { path = "./dependencies/ASKF/", editable = true}
 
 [tool.pixi.tasks]
-
 
 [tool.pixi.feature.format.dependencies]
 black = "23.3.0"

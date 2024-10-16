@@ -3,34 +3,35 @@
 	"datasets": [
 		{
 			"name": "Blob Dataset (500)",
-			"train": "blobs500_train",
-			"test": "blobs500_test", 
+			"train": "experiments/test/blobs500_train",
+			"test": "experiments/test/blobs500_test", 
 			"kernels": "Kernels",
 			"labels": "Labels"
 		},
 		{
                         "name": "Blob Dataset (700)",
-                        "train": "blobs700_train",
-                        "test": "blobs700_test", 
+                        "train": "experiments/test/blobs700_train",
+                        "test": "experiments/test/blobs700_test", 
                         "kernels": "Kernels",
                         "labels": "Labels"
                 }
 
 	],
-	"classifiers": [
+	"estimators": [
 		{
 			"name": "OvR Canonical-SPT ASKF",
 			"imports": [
 				{
 					"from": "ASKF",
-					"import": "BinaryASKFClassifier"
+					"import": ["BinaryASKFClassifier", "ASKFKernels"]
 				},
 				{
 					"from": "sklearn.multiclass",
-					"import": "OneVsRestClassifier"
+					"import": ["OneVsRestClassifier"]
 				}
 			],
 			"construction": "OneVsRestClassifier(BinaryASKFClassifier())",
+			"XConstruction": "ASKFKernels",
 			"parameterPrefix": "estimator__",
 			"parameters": {
 				"variation": ["canonical-faster"],
@@ -45,10 +46,11 @@
 			"imports": [
 				{
 					"from": "ASKF",
-					"import": "VectorizedASKFClassifier"
+					"import": ["VectorizedASKFClassifier", "ASKFKernels"]
 				}
 			],
 			"construction": "VectorizedASKFClassifier()",
+			"XConstruction": "ASKFKernels", 
 			"parameterPrefix": "",
 			"parameters": {
 				"variation": ["canonical-faster"],

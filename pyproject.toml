@@ -1,0 +1,46 @@
+[project]
+authors = [{name = "Peter Preinesberger", email = "peter.preinesberger@study.thws.de"}]
+dependencies = [
+]
+description = "An experiment runner for testing of ASKF estimator performance."
+name = "askf-bench"
+requires-python = ">= 3.11"
+version = "0.1.0"
+
+[build-system]
+build-backend = "hatchling.build"
+requires = ["hatchling"]
+
+[tool.pixi.project]
+channels = ["conda-forge"]
+platforms = ["linux-64"]
+
+[tool.pixi.pypi-dependencies]
+askf_bench = { path = ".", editable = true }
+
+[tool.pixi.tasks]
+
+
+[tool.pixi.feature.format.dependencies]
+black = "23.3.0"
+pre-commit = "3.7.1"
+ruff = "0.4.2"
+
+[tool.pixi.feature.format.tasks]
+black_fmt = { cmd = "black src" }
+ruff_fmt = { cmd = "ruff format src" }
+format = { depends_on = ["black_fmt", "ruff_fmt"]}
+
+[tool.pixi.feature.lint.dependencies]
+# The version below should be aligned with the one of `.pre-commit-config.yaml`
+black = "23.3.0"
+pre-commit = "3.7.1"
+ruff = "0.4.2"
+
+[tool.pixi.feature.lint.tasks]
+black = { cmd = "black --check --diff src" }
+ruff = { cmd = "ruff check --output-format=full src" }
+lint = { depends_on = ["black", "ruff"]}
+
+[tool.pixi.environments]
+dev = ["lint", "format"]

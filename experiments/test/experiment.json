@@ -1,0 +1,62 @@
+{
+	"name": "test",
+	"datasets": [
+		{
+			"name": "Blob Dataset (500)",
+			"train": "blobs500_train",
+			"test": "blobs500_test", 
+			"kernels": "Kernels",
+			"labels": "Labels"
+		},
+		{
+                        "name": "Blob Dataset (700)",
+                        "train": "blobs700_train",
+                        "test": "blobs700_test", 
+                        "kernels": "Kernels",
+                        "labels": "Labels"
+                }
+
+	],
+	"classifiers": [
+		{
+			"name": "OvR Canonical-SPT ASKF",
+			"imports": [
+				{
+					"from": "ASKF",
+					"import": "BinaryASKFClassifier"
+				},
+				{
+					"from": "sklearn.multiclass",
+					"import": "OneVsRestClassifier"
+				}
+			],
+			"construction": "OneVsRestClassifier(BinaryASKFClassifier())",
+			"parameterPrefix": "estimator__",
+			"parameters": {
+				"variation": ["canonical-faster"],
+				"c": [0.01, 0.1, 1, 10, 100],
+				"gamma": [0.01, 0.1, 1, 10, 100],
+				"beta": [0.01, 0.1, 1, 10, 100],
+				"delta": [0.01, 0.1, 1, 10, 100]
+			}
+		},
+		{
+			"name": "VO Canonical-SPT ASKF",
+			"imports": [
+				{
+					"from": "ASKF",
+					"import": "VectorizedASKFClassifier"
+				}
+			],
+			"construction": "VectorizedASKFClassifier()",
+			"parameterPrefix": "",
+			"parameters": {
+				"variation": ["canonical-faster"],
+				"c": [0.01, 0.1, 1, 10, 100],
+                                "gamma": [0.01, 0.1, 1, 10, 100],
+                                "beta": [0.01, 0.1, 1, 10, 100],
+                                "delta": [0.01, 0.1, 1, 10, 100]
+			}
+		}
+	]
+}

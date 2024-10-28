@@ -128,6 +128,7 @@ def extract_setup(jdict):
 
     return datasets, classifiers
 
+
 class NumpyEncoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, np.integer):
@@ -136,7 +137,7 @@ class NumpyEncoder(json.JSONEncoder):
             return float(obj)
         if isinstance(obj, np.ndarray):
             return obj.tolist()
-        return super(NpEncoder, self).default(obj)
+        return super(NumpyEncoder, self).default(obj)
 
 
 if __name__ == "__main__":
@@ -149,7 +150,13 @@ if __name__ == "__main__":
         findings = []
         for dataset_spec in datasets:
             try:
-                print("[INFO] loading dataset: (", dataset_spec["train"], ", ", dataset_spec["test"], ")")
+                print(
+                    "[INFO] loading dataset: (",
+                    dataset_spec["train"],
+                    ", ",
+                    dataset_spec["test"],
+                    ")",
+                )
                 dataset = load_dataset_from_spec(dataset_spec)
                 name = dataset["name"]
                 estimator_results = []
@@ -160,23 +167,27 @@ if __name__ == "__main__":
                     Ktest = clf["constructor"](dataset["test_kernels"])
                     clf["estimator"].fit(Ktrain, dataset["train_targets"])
                     score_test = clf["estimator"].score(Ktest, dataset["test_targets"])
-                    score_train = clf["estimator"].score(Ktrain, dataset["train_targets"])
+                    score_train = clf["estimator"].score(
+                        Ktrain, dataset["train_targets"]
+                    )
                     print("[INFO] score train/test: ", score_train, " ", score_test)
                     clf_results = {
                         "name": clf_name,
                         "train_score": score_train,
                         "test_score": score_test,
                         "cv_results": clf["estimator"].cv_results_,
-                        "best_index": clf["estimator"].best_index_
+                        "best_index": clf["estimator"].best_index_,
                     }
                     estimator_results.append(clf_results)
-                dataset_findings = {
-                    "dataset_name": name,
-                    "findings": estimator_results
-                }
+                dataset_findings = {"dataset_name": name, "findings": estimator_results}
                 findings.append(dataset_findings)
             except Exception:
-                print("[ERROR] an error ocurred with dataset: ", dataset_spec["test"], " ", dataset_spec["train"])
+                print(
+                    "[ERROR] an error ocurred with dataset: ",
+                    dataset_spec["test"],
+                    " ",
+                    dataset_spec["train"],
+                )
         print(findings)
         with open(outname + "_experiment_results.json", "w") as outfile:
             json.dump(findings, outfile, cls=NumpyEncoder)

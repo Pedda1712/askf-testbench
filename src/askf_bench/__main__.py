@@ -61,6 +61,33 @@ def load_kernels(fname, kernel_table, label_table):
     raise RuntimeError("could not open mat file " + fname)
 
 
+def load_dataset_from_spec(dataset_spec):
+    """Load a dataset into memory from a dataset specification.
+
+    Parameters
+    ----------
+    dataset_spec: {
+       "train": <name-of-hd5-train-file>,
+       "test": <name-of-hd5-test-file>,
+       "kernels": <name-of-kernel-name-list>,
+       "labels": <name-of-target-table>
+    }
+    """
+    test_kernels, test_targets = load_kernels(
+        dataset_spec["test"], dataset_spec["kernels"], dataset_spec["labels"]
+    )
+    train_kernels, train_targets = load_kernels(
+        dataset_spec["train"], dataset_spec["kernels"], dataset_spec["labels"]
+    )
+    dataset = {}
+    dataset["name"] = dataset_spec["name"]
+    dataset["test_kernels"] = test_kernels
+    dataset["train_kernels"] = train_kernels
+    dataset["test_targets"] = test_targets
+    dataset["train_targets"] = train_targets
+    return dataset
+
+
 def extract_setup(jdict):
     """Extract the experimental setup (datasets + classifiers) from an experiment json file.
 
@@ -70,25 +97,11 @@ def extract_setup(jdict):
 
     Return
     ------
-    list of datasets, list of classifiers
+    list of dataset specifications (load individually on demand with
+    load_dataset_from_spec(), list of classifiers
     """
-    datasets = []
+    datasets = jdict["datasets"]
     classifiers = []
-
-    for dataset_spec in jdict["datasets"]:
-        test_kernels, test_targets = load_kernels(
-            dataset_spec["test"], dataset_spec["kernels"], dataset_spec["labels"]
-        )
-        train_kernels, train_targets = load_kernels(
-            dataset_spec["train"], dataset_spec["kernels"], dataset_spec["labels"]
-        )
-        dataset = {}
-        dataset["name"] = dataset_spec["name"]
-        dataset["test_kernels"] = test_kernels
-        dataset["train_kernels"] = train_kernels
-        dataset["test_targets"] = test_targets
-        dataset["train_targets"] = train_targets
-        datasets.append(dataset)
 
     for estimator_spec in jdict["estimators"]:
         import_string = ""
@@ -115,10 +128,55 @@ def extract_setup(jdict):
 
     return datasets, classifiers
 
+class NumpyEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, np.integer):
+            return int(obj)
+        if isinstance(obj, np.floating):
+            return float(obj)
+        if isinstance(obj, np.ndarray):
+            return obj.tolist()
+        return super(NpEncoder, self).default(obj)
+
 
 if __name__ == "__main__":
     exp_file = str(sys.argv[1])
     with open(exp_file) as f:
         j = json.load(f)
-        name = j["name"]
+        outname = j["name"]
         datasets, classifiers = extract_setup(j)
+        # train and construct output
+        findings = []
+        for dataset_spec in datasets:
+            try:
+                print("[INFO] loading dataset: (", dataset_spec["train"], ", ", dataset_spec["test"], ")")
+                dataset = load_dataset_from_spec(dataset_spec)
+                name = dataset["name"]
+                estimator_results = []
+                for clf in classifiers:
+                    clf_name = clf["name"]
+                    print("[INFO] fitting classifier: ", clf_name)
+                    Ktrain = clf["constructor"](dataset["train_kernels"])
+                    Ktest = clf["constructor"](dataset["test_kernels"])
+                    clf["estimator"].fit(Ktrain, dataset["train_targets"])
+                    score_test = clf["estimator"].score(Ktest, dataset["test_targets"])
+                    score_train = clf["estimator"].score(Ktrain, dataset["train_targets"])
+                    print("[INFO] score train/test: ", score_train, " ", score_test)
+                    clf_results = {
+                        "name": clf_name,
+                        "train_score": score_train,
+                        "test_score": score_test,
+                        "cv_results": clf["estimator"].cv_results_,
+                        "best_index": clf["estimator"].best_index_
+                    }
+                    estimator_results.append(clf_results)
+                dataset_findings = {
+                    "dataset_name": name,
+                    "findings": estimator_results
+                }
+                findings.append(dataset_findings)
+            except Exception:
+                print("[ERROR] an error ocurred with dataset: ", dataset_spec["test"], " ", dataset_spec["train"])
+        print(findings)
+        with open(outname + "_experiment_results.json", "w") as outfile:
+            json.dump(findings, outfile, cls=NumpyEncoder)

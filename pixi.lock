@@ -146,7 +146,7 @@ packages:
   name: askf-bench
   version: 0.1.0
   path: .
-  sha256: 6931fd5a34e0f581aaa915acd068010b84b58b2eb98c1fd3e42ea221439ea11c
+  sha256: ee65f1f0a1642f1586621e52173f9a52c6674e6b59cd1b84a8fe68f0ca298da5
   requires_dist:
   - numpy>=2.1.2,<3
   - scipy>=1.14.1,<2

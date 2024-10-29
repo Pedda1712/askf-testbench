@@ -148,7 +148,9 @@ if __name__ == "__main__":
         datasets, classifiers = extract_setup(j)
         # train and construct output
         findings = []
+        i = -1
         for dataset_spec in datasets:
+            i = i + 1
             try:
                 print(
                     "[INFO] loading dataset: (",
@@ -181,13 +183,25 @@ if __name__ == "__main__":
                     estimator_results.append(clf_results)
                 dataset_findings = {"dataset_name": name, "findings": estimator_results}
                 findings.append(dataset_findings)
-            except Exception:
+                local_outname = (
+                    outname
+                    + "_"
+                    + str(i)
+                    + "_of_"
+                    + str(len(datasets))
+                    + "_experiment_results.json"
+                )
+                with open(local_outname, "w") as outfile:
+                    json.dump(findings, outfile, cls=NumpyEncoder)
+            except Exception as e:
                 print(
                     "[ERROR] an error ocurred with dataset: ",
                     dataset_spec["test"],
                     " ",
                     dataset_spec["train"],
+                    " ",
+                    e
                 )
-        print(findings)
+
         with open(outname + "_experiment_results.json", "w") as outfile:
             json.dump(findings, outfile, cls=NumpyEncoder)

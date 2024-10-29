@@ -141,6 +141,9 @@ class NumpyEncoder(json.JSONEncoder):
 
 
 if __name__ == "__main__":
+    if len(sys.argv) != 2:
+        print("expected one argument: askf_bench <experiment-specification.json>")
+        exit(1)
     exp_file = str(sys.argv[1])
     with open(exp_file) as f:
         j = json.load(f)

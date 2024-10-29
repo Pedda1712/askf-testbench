@@ -7,6 +7,14 @@ name = "askf-bench"
 requires-python = ">= 3.11"
 version = "0.1.0"
 
+[tool.hatch.build.targets.sdist]
+exclude = [
+  "/.github",
+  "/docs",
+  "/experiments",
+  "/dependencies"
+]
+
 [tool.hatch.build.targets.wheel]
 packages = ["src/askf_bench"]
 

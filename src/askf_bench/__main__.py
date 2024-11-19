@@ -18,7 +18,7 @@ import json
 import h5py
 import scipy.io
 import numpy as np
-from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import GridSearchCV, train_test_split
 
 
 def load_kernels(fname, kernel_table, label_table):
@@ -48,6 +48,7 @@ def load_kernels(fname, kernel_table, label_table):
     try:
         mat = h5py.File(fname)
         klist = []
+
         for kr in mat[kernel_table][0]:
             k = np.array(mat[kr], dtype=np.double)
             klist.append(k)
@@ -55,8 +56,8 @@ def load_kernels(fname, kernel_table, label_table):
         labels = np.array(mat[label_table], dtype=int)
         labels = labels - np.min(labels)
         return klist, labels[0]
-    except Exception:
-        print("[INFO] loading mat7 failed")
+    except Exception as e:
+        print("[INFO] loading mat7 failed ", e)
 
     raise RuntimeError("could not open mat file " + fname)
 
@@ -73,19 +74,55 @@ def load_dataset_from_spec(dataset_spec):
        "labels": <name-of-target-table>
     }
     """
-    test_kernels, test_targets = load_kernels(
-        dataset_spec["test"], dataset_spec["kernels"], dataset_spec["labels"]
-    )
-    train_kernels, train_targets = load_kernels(
-        dataset_spec["train"], dataset_spec["kernels"], dataset_spec["labels"]
-    )
-    dataset = {}
-    dataset["name"] = dataset_spec["name"]
-    dataset["test_kernels"] = test_kernels
-    dataset["train_kernels"] = train_kernels
-    dataset["test_targets"] = test_targets
-    dataset["train_targets"] = train_targets
-    return dataset
+
+    if "data" in dataset_spec.keys():
+        # one large kernel matrix provided, split into 5 train/test splits
+        kernels, targets = load_kernels(
+            dataset_spec["data"], dataset_spec["kernels"], dataset_spec["labels"]
+        )
+        ind = np.arange(kernels[0].shape[0])
+
+        dataset = {}
+        dataset["name"] = dataset_spec["name"]
+        dataset["test_kernels"] = []
+        dataset["train_kernels"] = []
+        dataset["test_targets"] = []
+        dataset["train_targets"] = []
+
+        for i in range(0, dataset_spec["repeat"]):
+            train_ind, test_ind = train_test_split(
+                ind, test_size=dataset_spec["split"], random_state=i
+            )
+            train_target = targets[train_ind]
+            test_target = targets[test_ind]
+            train_Ks = []
+            test_Ks = []
+            for K in kernels:
+                train_K = K[train_ind, :][:, train_ind]
+                test_K = K[test_ind, :][:, train_ind]
+                train_Ks.append(train_K)
+                test_Ks.append(test_K)
+            dataset["test_kernels"].append(test_Ks)
+            dataset["train_kernels"].append(train_Ks)
+            dataset["test_targets"].append(test_target)
+            dataset["train_targets"].append(train_target)
+
+        return dataset
+    else:
+        # there is only one CV run, as there is one dedicated test dataset
+        test_kernels, test_targets = load_kernels(
+            dataset_spec["test"], dataset_spec["kernels"], dataset_spec["labels"]
+        )
+        train_kernels, train_targets = load_kernels(
+            dataset_spec["train"], dataset_spec["kernels"], dataset_spec["labels"]
+        )
+        dataset = {}
+        dataset["name"] = dataset_spec["name"]
+        dataset["test_kernels"] = [test_kernels]
+        dataset["train_kernels"] = [train_kernels]
+        dataset["test_targets"] = [test_targets]
+        dataset["train_targets"] = [train_targets]
+        return dataset
 
 
 def extract_setup(jdict):
@@ -151,15 +188,15 @@ if __name__ == "__main__":
         datasets, classifiers = extract_setup(j)
         # train and construct output
         findings = []
-        i = -1
+        dc = -1
         for dataset_spec in datasets:
-            i = i + 1
+            dc = dc + 1
             try:
                 print(
                     "[INFO] loading dataset: (",
-                    dataset_spec["train"],
-                    ", ",
-                    dataset_spec["test"],
+                    dataset_spec["train"]
+                    if "train" in dataset_spec
+                    else dataset_spec["data"],
                     ")",
                 )
                 dataset = load_dataset_from_spec(dataset_spec)
@@ -167,29 +204,40 @@ if __name__ == "__main__":
                 estimator_results = []
                 for clf in classifiers:
                     clf_name = clf["name"]
-                    print("[INFO] fitting classifier: ", clf_name)
-                    Ktrain = clf["constructor"](dataset["train_kernels"])
-                    Ktest = clf["constructor"](dataset["test_kernels"])
-                    clf["estimator"].fit(Ktrain, dataset["train_targets"])
-                    score_test = clf["estimator"].score(Ktest, dataset["test_targets"])
-                    score_train = clf["estimator"].score(
-                        Ktrain, dataset["train_targets"]
-                    )
-                    print("[INFO] score train/test: ", score_train, " ", score_test)
+                    repeats = len(dataset["train_targets"])
                     clf_results = {
                         "name": clf_name,
-                        "train_score": score_train,
-                        "test_score": score_test,
-                        "cv_results": clf["estimator"].cv_results_,
-                        "best_index": clf["estimator"].best_index_,
+                        "train_score": [],
+                        "test_score": [],
+                        "cv_results": [],
+                        "best_index": [],
                     }
+                    print("[INFO] fitting classifier: ", clf_name)
+                    for i in range(0, repeats):
+                        print("[INFO] repeat ", i)
+                        Ktrain = clf["constructor"](dataset["train_kernels"][i])
+                        Ktest = clf["constructor"](dataset["test_kernels"][i])
+                        clf["estimator"].fit(Ktrain, dataset["train_targets"][i])
+                        score_test = clf["estimator"].score(
+                            Ktest, dataset["test_targets"][i]
+                        )
+                        score_train = clf["estimator"].score(
+                            Ktrain, dataset["train_targets"][i]
+                        )
+                        print("[INFO] score train/test: ", score_train, " ", score_test)
+
+                        clf_results["train_score"].append(score_train)
+                        clf_results["test_score"].append(score_test)
+                        clf_results["cv_results"].append(clf["estimator"].cv_results_)
+                        clf_results["best_index"].append(clf["estimator"].best_index_)
+
                     estimator_results.append(clf_results)
                 dataset_findings = {"dataset_name": name, "findings": estimator_results}
                 findings.append(dataset_findings)
                 local_outname = (
                     outname
                     + "_"
-                    + str(i)
+                    + str(dc)
                     + "_of_"
                     + str(len(datasets))
                     + "_experiment_results.json"

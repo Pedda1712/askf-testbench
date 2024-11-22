@@ -14,6 +14,7 @@ If not, see <https://www.gnu.org/licenses/>.
 """
 
 import datetime
+import time
 import sys
 import json
 import h5py
@@ -210,11 +211,13 @@ if __name__ == "__main__":
                         "name": clf_name,
                         "train_score": [],
                         "test_score": [],
+                        "cv_time": [],
                         "cv_results": [],
                         "best_index": [],
                     }
                     print(f"[INFO {datetime.datetime.now()}] fitting classifier: ", clf_name)
                     for i in range(0, repeats):
+                        start = time.time()
                         print(f"[INFO {datetime.datetime.now()}] repeat ", i)
                         Ktrain = clf["constructor"](dataset["train_kernels"][i])
                         Ktest = clf["constructor"](dataset["test_kernels"][i])
@@ -225,10 +228,11 @@ if __name__ == "__main__":
                         score_train = clf["estimator"].score(
                             Ktrain, dataset["train_targets"][i]
                         )
-                        print(f"[INFO {datetime.datetime.now()}] score train/test: ", score_train, " ", score_test)
-
+                        print(f"[INFO {datetime.datetime.now()}] score train, score test, time taken: ", score_train, " ", score_test, " ", end-start)
+                        end = time.time()
                         clf_results["train_score"].append(score_train)
                         clf_results["test_score"].append(score_test)
+                        clf_results["cv_time"].append(end - start)
                         clf_results["cv_results"].append(clf["estimator"].cv_results_)
                         clf_results["best_index"].append(clf["estimator"].best_index_)
 

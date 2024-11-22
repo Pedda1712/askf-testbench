@@ -215,7 +215,10 @@ if __name__ == "__main__":
                         "cv_results": [],
                         "best_index": [],
                     }
-                    print(f"[INFO {datetime.datetime.now()}] fitting classifier: ", clf_name)
+                    print(
+                        f"[INFO {datetime.datetime.now()}] fitting classifier: ",
+                        clf_name,
+                    )
                     for i in range(0, repeats):
                         start = time.time()
                         print(f"[INFO {datetime.datetime.now()}] repeat ", i)
@@ -229,7 +232,14 @@ if __name__ == "__main__":
                             Ktrain, dataset["train_targets"][i]
                         )
                         end = time.time()
-                        print(f"[INFO {datetime.datetime.now()}] score train, score test, time taken: ", score_train, " ", score_test, " ", end-start)
+                        print(
+                            f"[INFO {datetime.datetime.now()}] score train, score test, time taken: ",
+                            score_train,
+                            " ",
+                            score_test,
+                            " ",
+                            end - start,
+                        )
                         clf_results["train_score"].append(score_train)
                         clf_results["test_score"].append(score_test)
                         clf_results["cv_time"].append(end - start)

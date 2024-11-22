@@ -228,8 +228,8 @@ if __name__ == "__main__":
                         score_train = clf["estimator"].score(
                             Ktrain, dataset["train_targets"][i]
                         )
-                        print(f"[INFO {datetime.datetime.now()}] score train, score test, time taken: ", score_train, " ", score_test, " ", end-start)
                         end = time.time()
+                        print(f"[INFO {datetime.datetime.now()}] score train, score test, time taken: ", score_train, " ", score_test, " ", end-start)
                         clf_results["train_score"].append(score_train)
                         clf_results["test_score"].append(score_test)
                         clf_results["cv_time"].append(end - start)

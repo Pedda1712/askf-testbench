@@ -13,6 +13,7 @@ You should have received a copy of the GNU General Public License along with ASK
 If not, see <https://www.gnu.org/licenses/>.
 """
 
+import datetime
 import sys
 import json
 import h5py
@@ -193,7 +194,7 @@ if __name__ == "__main__":
             dc = dc + 1
             try:
                 print(
-                    "[INFO] loading dataset: (",
+                    f"[INFO {datetime.datetime.now()}] loading dataset: (",
                     dataset_spec["train"]
                     if "train" in dataset_spec
                     else dataset_spec["data"],
@@ -212,9 +213,9 @@ if __name__ == "__main__":
                         "cv_results": [],
                         "best_index": [],
                     }
-                    print("[INFO] fitting classifier: ", clf_name)
+                    print(f"[INFO {datetime.datetime.now()}] fitting classifier: ", clf_name)
                     for i in range(0, repeats):
-                        print("[INFO] repeat ", i)
+                        print(f"[INFO {datetime.datetime.now()}] repeat ", i)
                         Ktrain = clf["constructor"](dataset["train_kernels"][i])
                         Ktest = clf["constructor"](dataset["test_kernels"][i])
                         clf["estimator"].fit(Ktrain, dataset["train_targets"][i])
@@ -224,7 +225,7 @@ if __name__ == "__main__":
                         score_train = clf["estimator"].score(
                             Ktrain, dataset["train_targets"][i]
                         )
-                        print("[INFO] score train/test: ", score_train, " ", score_test)
+                        print(f"[INFO {datetime.datetime.now()}] score train/test: ", score_train, " ", score_test)
 
                         clf_results["train_score"].append(score_train)
                         clf_results["test_score"].append(score_test)
@@ -246,7 +247,7 @@ if __name__ == "__main__":
                     json.dump(findings, outfile, cls=NumpyEncoder)
             except Exception as e:
                 print(
-                    "[ERROR] an error ocurred with dataset: ",
+                    f"[ERROR {datetime.datetime.now()}] an error ocurred with dataset: ",
                     dataset_spec["test"],
                     " ",
                     dataset_spec["train"],

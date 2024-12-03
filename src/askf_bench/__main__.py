@@ -101,7 +101,12 @@ def load_dataset_from_spec(dataset_spec):
             test_target = targets[test_ind]
             cv_train_ind = train_ind
             if train_ind.shape[0] > 150:
-                _, cv_train_ind = train_test_split(train_ind, test_size=150/train_ind.shape[0], random_state=0, stratify=train_target)
+                _, cv_train_ind = train_test_split(
+                    train_ind,
+                    test_size=150 / train_ind.shape[0],
+                    random_state=0,
+                    stratify=train_target,
+                )
 
             cv_train_target = targets[cv_train_ind]
             train_Ks = []
@@ -242,7 +247,9 @@ if __name__ == "__main__":
                         clf["estimator"].fit(Kcvtrain, dataset["cv_train_targets"][i])
 
                         start = time.time()
-                        clf["estimator"].best_estimator_.fit(Ktrain, dataset["train_targets"][i])
+                        clf["estimator"].best_estimator_.fit(
+                            Ktrain, dataset["train_targets"][i]
+                        )
                         end = time.time()
 
                         score_test = clf["estimator"].best_estimator_.score(

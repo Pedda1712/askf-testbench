@@ -88,26 +88,38 @@ def load_dataset_from_spec(dataset_spec):
         dataset["name"] = dataset_spec["name"]
         dataset["test_kernels"] = []
         dataset["train_kernels"] = []
+        dataset["cv_train_kernels"] = []
         dataset["test_targets"] = []
         dataset["train_targets"] = []
+        dataset["cv_train_targets"] = []
 
         for i in range(0, dataset_spec["repeat"]):
             train_ind, test_ind = train_test_split(
-                ind, test_size=dataset_spec["split"], random_state=i
+                ind, test_size=dataset_spec["split"], random_state=i, stratify=targets
             )
             train_target = targets[train_ind]
             test_target = targets[test_ind]
+            cv_train_ind = train_ind
+            if train_ind.shape[0] > 150:
+                _, cv_train_ind = train_test_split(train_ind, test_size=150/train_ind.shape[0], random_state=0, stratify=train_target)
+
+            cv_train_target = targets[cv_train_ind]
             train_Ks = []
+            cv_train_Ks = []
             test_Ks = []
             for K in kernels:
                 train_K = K[train_ind, :][:, train_ind]
+                cv_train_K = K[cv_train_ind, :][:, cv_train_ind]
                 test_K = K[test_ind, :][:, train_ind]
                 train_Ks.append(train_K)
                 test_Ks.append(test_K)
+                cv_train_Ks.append(cv_train_K)
             dataset["test_kernels"].append(test_Ks)
             dataset["train_kernels"].append(train_Ks)
+            dataset["cv_train_kernels"].append(cv_train_Ks)
             dataset["test_targets"].append(test_target)
             dataset["train_targets"].append(train_target)
+            dataset["cv_train_targets"].append(cv_train_target)
 
         return dataset
     else:
@@ -122,8 +134,10 @@ def load_dataset_from_spec(dataset_spec):
         dataset["name"] = dataset_spec["name"]
         dataset["test_kernels"] = [test_kernels]
         dataset["train_kernels"] = [train_kernels]
+        dataset["cv_train_kernels"] = [train_kernels]
         dataset["test_targets"] = [test_targets]
         dataset["train_targets"] = [train_targets]
+        dataset["cv_train_targets"] = [train_targets]
         return dataset
 
 
@@ -220,18 +234,23 @@ if __name__ == "__main__":
                         clf_name,
                     )
                     for i in range(0, repeats):
-                        start = time.time()
                         print(f"[INFO {datetime.datetime.now()}] repeat ", i)
                         Ktrain = clf["constructor"](dataset["train_kernels"][i])
+                        Kcvtrain = clf["constructor"](dataset["cv_train_kernels"][i])
                         Ktest = clf["constructor"](dataset["test_kernels"][i])
-                        clf["estimator"].fit(Ktrain, dataset["train_targets"][i])
-                        score_test = clf["estimator"].score(
+
+                        clf["estimator"].fit(Kcvtrain, dataset["cv_train_targets"][i])
+
+                        start = time.time()
+                        clf["estimator"].best_estimator_.fit(Ktrain, dataset["train_targets"][i])
+                        end = time.time()
+
+                        score_test = clf["estimator"].best_estimator_.score(
                             Ktest, dataset["test_targets"][i]
                         )
-                        score_train = clf["estimator"].score(
+                        score_train = clf["estimator"].best_estimator_.score(
                             Ktrain, dataset["train_targets"][i]
                         )
-                        end = time.time()
                         print(
                             f"[INFO {datetime.datetime.now()}] score train, score test, time taken: ",
                             score_train,

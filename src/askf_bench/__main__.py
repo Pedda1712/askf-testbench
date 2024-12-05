@@ -135,14 +135,31 @@ def load_dataset_from_spec(dataset_spec):
         train_kernels, train_targets = load_kernels(
             dataset_spec["train"], dataset_spec["kernels"], dataset_spec["labels"]
         )
+
+        train_ind = np.arange(train_kernels[0].shape[0])
+        cv_train_ind = train_ind
+        if train_ind.shape[0] > 150:
+            _, cv_train_ind = train_test_split(
+                train_ind,
+                test_size=150 / train_ind.shape[0],
+                random_state=0,
+                stratify=train_targets,
+            )
+
+        cv_train_target = train_targets[cv_train_ind]
+        cv_train_kernels = []
+        for K in train_kernels:
+            cv_train_K = K[cv_train_ind, :][:, cv_train_ind]
+            cv_train_kernels.append(cv_train_K)
+
         dataset = {}
         dataset["name"] = dataset_spec["name"]
         dataset["test_kernels"] = [test_kernels]
         dataset["train_kernels"] = [train_kernels]
-        dataset["cv_train_kernels"] = [train_kernels]
+        dataset["cv_train_kernels"] = [cv_train_kernels]
         dataset["test_targets"] = [test_targets]
         dataset["train_targets"] = [train_targets]
-        dataset["cv_train_targets"] = [train_targets]
+        dataset["cv_train_targets"] = [cv_train_target]
         return dataset
 
 

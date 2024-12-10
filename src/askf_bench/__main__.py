@@ -195,9 +195,16 @@ def extract_setup(jdict):
             estimator_spec["parameterPrefix"] + k: v
             for k, v in estimator_spec["parameters"].items()
         }
+
+        enforce = {
+            estimator_spec["parameterPrefix"] + k: v
+            for k, v in estimator_spec["enforce"].items()
+        }
+        # print(enforce)
         estimator = {}
         estimator["name"] = estimator_spec["name"]
         estimator["estimator"] = GridSearchCV(estimator=clf, param_grid=parameters)
+        estimator["enforce"] = enforce
         estimator["constructor"] = data_constructor
         classifiers.append(estimator)
 
@@ -262,6 +269,8 @@ if __name__ == "__main__":
                         Ktest = clf["constructor"](dataset["test_kernels"][i])
 
                         clf["estimator"].fit(Kcvtrain, dataset["cv_train_targets"][i])
+
+                        clf["estimator"].best_estimator_.set_params(**clf["enforce"])
 
                         start = time.time()
                         clf["estimator"].best_estimator_.fit(

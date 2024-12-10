@@ -2,20 +2,12 @@
 	"name": "test",
 	"datasets": [
 		{
-			"name": "Blob Dataset (500)",
+			"name": "Blob Datases",
 			"train": "experiments/test/blobs500_train",
-			"test": "experiments/test/blobs500_test", 
+			"test": "experiments/test/blobs500_test",
 			"kernels": "Kernels",
 			"labels": "Labels"
-		},
-		{
-                        "name": "Blob Dataset (700)",
-                        "train": "experiments/test/blobs700_train",
-                        "test": "experiments/test/blobs700_test", 
-                        "kernels": "Kernels",
-                        "labels": "Labels"
-                }
-
+		}
 	],
 	"estimators": [
 		{
@@ -35,13 +27,15 @@
 			"parameterPrefix": "estimator__",
 			"parameters": {
 				"variation": ["canonical-faster"],
-				"c": [0.01, 0.1, 1, 10, 100],
-				"gamma": [0.01, 0.1, 1, 10, 100],
-				"beta": [0.01, 0.1, 1, 10, 100],
-				"delta": [0.01, 0.1, 1, 10, 100]
-			}
-		},
-		{
+				"c": [0.1, 1],
+				"gamma": [1],
+				"beta": [1],
+				"delta": [1]
+			},
+		        "enforce": {
+        			"gpu": false
+	       	         }
+		},{
 			"name": "VO Canonical-SPT ASKF",
 			"imports": [
 				{
@@ -54,11 +48,12 @@
 			"parameterPrefix": "",
 			"parameters": {
 				"variation": ["canonical-faster"],
-				"c": [0.01, 0.1, 1, 10, 100],
-                                "gamma": [0.01, 0.1, 1, 10, 100],
-                                "beta": [0.01, 0.1, 1, 10, 100],
-                                "delta": [0.01, 0.1, 1, 10, 100]
-			}
+				"c": [0.1, 1],
+                                "gamma": [1],
+                                "beta": [1],
+                                "delta": [1]
+			},
+		    "enforce": {}
 		}
 	]
 }

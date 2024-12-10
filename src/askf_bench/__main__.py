@@ -203,7 +203,7 @@ def extract_setup(jdict):
         # print(enforce)
         estimator = {}
         estimator["name"] = estimator_spec["name"]
-        estimator["estimator"] = GridSearchCV(estimator=clf, param_grid=parameters)
+        estimator["estimator"] = GridSearchCV(estimator=clf, param_grid=parameters, n_jobs=-1)
         estimator["enforce"] = enforce
         estimator["constructor"] = data_constructor
         classifiers.append(estimator)
